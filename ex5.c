@@ -1,9 +1,14 @@
+/******************
+Name:ilay hefgot
+ID:212398648
+Assignment:ex5
+*******************/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define Done 4
-#define out 6
+#define CLOSE_PROGRAM 4
+#define RETURN_MENU 6
 typedef struct Song {
     char* title;
     char* artist;
@@ -19,15 +24,15 @@ typedef struct Playlist {
 } Playlist;
 
 void addPlayList(char **playListName, Playlist** playlists,int *howManyPlaylists);
-void  watchPlayList(char mainMenu[],int howManyPlaylists,Playlist **playLists,char **songDetail,Song** songs);
+void  watchPlayList(char mainMenu[],int howManyPlaylists,Playlist **playLists,char **songDetail);
 void printMenu();
 void buildArrayOfPlayLists( Playlist** playlists,int *howManyPlaylists);
 void printPlayListMenu(int howManyPlaylists,Playlist** playlists,int menuIndex,char mainMenu[]);
 void  printPlayListOptions();
-void getInfoAboutSong(Playlist **playLists,char **songDetail,Song **songs,int playListChoice);
+void getInfoAboutSong(Playlist **playLists,char **songDetail,int playListChoice);
 void buildArrayOfSongs( int playListChoice,Playlist **playlists);
 char* getString();
-void sort(int choice,int playListChoice,Playlist **song);
+void sort(int choice,int playListChoice,Playlist **playlist);
 void sortByYear(int playListChoice,Playlist **playList);
 void sortAlphabetically(int playListChoice,Playlist **playList);
 void sortByStreamAscending(int playListChoice,Playlist **playList);
@@ -35,23 +40,23 @@ void sortByStreamDescending(int playListChoice,Playlist **playList);
 void sortPlaylist();
 void deleteSong(int songDelete,Playlist **playlist,int playListChoice);
 void removePlayList(int *howManyPlaylists,Playlist **playLists,char menu[]);
+void freeAll(int *howManyPlaylists,Playlist **playLists);
 int main() {
     printMenu();
     int menuChoice=0;
     int howManyPlaylists=0;
     char *playListName = NULL;
     char *songDetail = NULL;
-    Song *songs = NULL;
      Playlist* playlists = NULL;
     scanf("%d", &menuChoice);
     //main menu switch cases
-    while(menuChoice!=Done)
+    while(menuChoice!=CLOSE_PROGRAM)
     {
         switch(menuChoice)
         {
         case 1:{
                 char menu[]="Back to main menu\n";
-                watchPlayList(menu,howManyPlaylists,&playlists,&songDetail,&songs);
+                watchPlayList(menu,howManyPlaylists,&playlists,&songDetail);
                 break;
         }
         case 2:
@@ -65,15 +70,17 @@ int main() {
                 removePlayList(&howManyPlaylists,&playlists,menu);
                 break;
             }
+
         }
         printMenu();
         scanf("%d", &menuChoice);
     }
-    printf("Goodbye!");
+    freeAll(&howManyPlaylists,&playlists);
+    printf("Goodbye!\n");
 
 }
 
-void watchPlayList(char mainMenu[],int howManyPlaylists,Playlist **playLists,char **songDetail,Song** songs)
+void watchPlayList(char mainMenu[],int howManyPlaylists,Playlist **playLists,char **songDetail)
 {
     int songChoice;
     int menuChoice;
@@ -92,7 +99,7 @@ void watchPlayList(char mainMenu[],int howManyPlaylists,Playlist **playLists,cha
             printPlayListOptions();
             scanf("%d",&menuChoice);
 
-            while(menuChoice!=out)
+            while(menuChoice!=RETURN_MENU)
             {
                 switch(menuChoice)
                 {
@@ -113,15 +120,17 @@ void watchPlayList(char mainMenu[],int howManyPlaylists,Playlist **playLists,cha
                             Song **temp=(*playLists)[playListChoice-1].songs;
                             while (x<=(*playLists)[playListChoice-1].songsNum)
                             {
-                                printf("%d. Title: %s\n   Artist: %s\n   Released: %d\n   Streams: %d\n",x,temp[x-1]->title,temp[x-1]->artist,temp[x-1]->year,temp[x-1]->streams);
+                                printf("%d. Title: %s\n   Artist: %s\n   Released: %d\n   Streams: %d\n",
+                                    x,temp[x-1]->title,temp[x-1]->artist,temp[x-1]->year,temp[x-1]->streams);
                                 x++;
                             }
                             printf("\nchoose a song to play, or 0 to quit:\n");
                             scanf("%d",&songChoice);
                             while(songChoice!=0)
                             {
-                                printf("Now playing %s:\n",(*playLists)[playListChoice-1].songs[songChoice-1]->title);
-                                printf("%s $\n\n",(*playLists)[playListChoice-1].songs[songChoice-1]->lyrics);
+                                printf("Now playing %s:\n",(*playLists)[playListChoice-1].
+                                    songs[songChoice-1]->title);
+                                printf("$ %s $\n\n",(*playLists)[playListChoice-1].songs[songChoice-1]->lyrics);
                                 (*playLists)[playListChoice-1].songs[songChoice-1]->streams=
                                 (*playLists)[playListChoice-1].songs[songChoice-1]->streams+1;
                                 printf("choose a song to play, or 0 to quit:\n");
@@ -133,7 +142,7 @@ void watchPlayList(char mainMenu[],int howManyPlaylists,Playlist **playLists,cha
                     }
                     case 2:
                     {
-                        getInfoAboutSong(playLists,songDetail,songs,playListChoice);
+                        getInfoAboutSong(playLists,songDetail,playListChoice);
                         break;
                     }
                     case 3:
@@ -143,8 +152,8 @@ void watchPlayList(char mainMenu[],int howManyPlaylists,Playlist **playLists,cha
                         int songDelete;
                         while (x<=(*playLists)[playListChoice-1].songsNum)
                         {
-                            printf("%d. Title: %s\n   Artist: %s\n   Released: %d\n   Streams: %d\n",x,temp[x-1]->title,
-                                temp[x-1]->artist,temp[x-1]->year,temp[x-1]->streams);
+                            printf("%d. Title: %s\n   Artist: %s\n   Released: %d\n   Streams: %d\n",x
+                                ,temp[x-1]->title,temp[x-1]->artist,temp[x-1]->year,temp[x-1]->streams);
                             x++;
                         }
                         printf("choose a song to delete, or 0 to quit:\n");
@@ -171,9 +180,12 @@ void watchPlayList(char mainMenu[],int howManyPlaylists,Playlist **playLists,cha
                         int i=0;
                         while(i<(*playLists)[playListChoice-1].songsNum)
                         {
-                            printf("Now playing %s:\n",(*playLists)[playListChoice-1].name);
-                            printf("%s $\n",(*playLists)[playListChoice-1].songs[i]->lyrics);
+                            printf("Now playing %s:\n",(*playLists)[playListChoice-1].songs[i]->title);
+                            printf("$ %s $\n",(*playLists)[playListChoice-1].songs[i]->lyrics);
+                            (*playLists)[playListChoice-1].songs[i]->streams=
+                              (*playLists)[playListChoice-1].songs[i]->streams+1;
                             i++;
+
                         }
                         break;
                     }
@@ -196,15 +208,15 @@ void watchPlayList(char mainMenu[],int howManyPlaylists,Playlist **playLists,cha
         scanf("%d",&playListChoice);
     }
 }
-void getInfoAboutSong(Playlist **playLists,char **songDetail,Song **songs,int playListChoice)
+void getInfoAboutSong(Playlist **playLists,char **songDetail,int playListChoice)
 {
     printf("Enter song's details\nTitle:\n");
-    // because the buffer might hold \n that i dont want to, so i use getchar()
+    // clear the buffer
     getchar();
     *songDetail = getString();
     if (*songDetail == NULL) {
-        printf("fail in getting title name \n");
-        return;
+        printf("malloc failed");
+        exit(1);
     }
     buildArrayOfSongs(playListChoice,playLists);
     // create a playlist pointer which points to the specific playlist place
@@ -215,8 +227,8 @@ void getInfoAboutSong(Playlist **playLists,char **songDetail,Song **songs,int pl
     printf("Artist:\n");
     *songDetail = getString();
     if (*songDetail == NULL) {
-        printf("fail in getting title name\n");
-        return;
+        printf("malloc failed");
+        exit(1);
     }
     newSong->artist = *songDetail;
     printf("Year of release:\n");
@@ -226,13 +238,13 @@ void getInfoAboutSong(Playlist **playLists,char **songDetail,Song **songs,int pl
         printf("wrong input\n");
         return;
     }
-    getchar(); // Clean buffer after year input
+    getchar(); // clean buffer after year input
     newSong->year = year;
     printf("Lyrics:\n");
     *songDetail = getString();
     if (*songDetail == NULL) {
-        printf("Failed to retrieve lyrics.\n");
-        return;
+        printf("malloc failed");
+        exit(1);
     }
     newSong->lyrics = *songDetail;
     newSong->streams = 0; // Initialize streams to 0 because still no one watched it
@@ -341,21 +353,21 @@ void addPlayList( char **playListName, Playlist** playlists,int *howManyPlaylist
     *playListName = malloc(sizeof(char));
     // checks if malloc succeeded
     if (*playListName == NULL) {
-        printf("failed to allocate memory");
-        return;
+        printf("malloc failed");
+        exit(1);
     }
 
-    while ((c=getchar()) !='\n')
+    while ((c=getchar()) !='\n'&& c !='\r')
     {
         length++;
         tempP= realloc(*playListName,(length+1) * sizeof(char));
 
         if(tempP==NULL)
         {
-            printf("failed to allocate memory");
             free(*playListName);
-            playListName=NULL;
-            return;
+            *playListName=NULL;
+            printf("malloc failed");
+            exit(1);
         }
 
         *playListName= tempP;
@@ -363,20 +375,23 @@ void addPlayList( char **playListName, Playlist** playlists,int *howManyPlaylist
     }
     // Add null terminator
     (*playListName)[length]='\0';
-    // i check if the user did add a name if yes the go to build the new array
+    // i check if the user did add a name if yes then go to build the new array
     if (length > 0) {
         buildArrayOfPlayLists(playlists, howManyPlaylists);
 
         //set the name in the new playlist (the plus one to the length is because i need room for \0)
         (*playlists)[*howManyPlaylists - 1].name=malloc((length+1)*sizeof(char));
         if ((*playlists)[*howManyPlaylists - 1].name == NULL) {
-            printf("failed to allocate memory for playlist name");
             // Cleanup if name allocation failed
             (*howManyPlaylists)--;
-            return;
+            printf("malloc failed");
+            exit(1);
         }
         strcpy((*playlists)[*howManyPlaylists - 1].name,*playListName);
+
     }
+    //after playlistname is used free it
+    free(*playListName);
 }
 void buildArrayOfPlayLists( Playlist** playlists,int *howManyPlaylists)
 {
@@ -388,10 +403,10 @@ void buildArrayOfPlayLists( Playlist** playlists,int *howManyPlaylists)
     temp = realloc(*playlists,*howManyPlaylists * sizeof(Playlist));
     if(temp==NULL)
     {
-        printf("failed to allocate memory");
-        // if we failed to realloc then we didnt realy add a playlist
+        // if we failed to realloc then we didnt really add a playlist
         (*howManyPlaylists)--;
-        return;
+        printf("malloc failed");
+        exit(1);
     }
     *playlists=temp;
     // set all the playlist variables to 0/NULL
@@ -409,10 +424,10 @@ void buildArrayOfSongs(int playListChoice,Playlist **playlists)
         (*playlists)[playListChoice-1].songsNum * sizeof(Song*));
     if(temp==NULL)
     {
-        printf("failed to allocate memory");
         // if we failed to reallocate then we didn't really add a song
         (*playlists)[playListChoice-1].songsNum= (*playlists)[playListChoice-1].songsNum-1;
-        return;
+        printf("malloc failed");
+        exit(1);
     }
     // after a successful creation of a song i create a array of song pointers
    (*playlists)[playListChoice-1].songs=temp;
@@ -420,7 +435,7 @@ void buildArrayOfSongs(int playListChoice,Playlist **playlists)
    (*playlists)[playListChoice-1].songs[(*playlists)[playListChoice-1].songsNum-1]=malloc(sizeof(Song));
     // check if malloc failed
     if ((*playlists)[playListChoice - 1].songs[(*playlists)[playListChoice-1].songsNum-1] == NULL) {
-        printf("Failed to allocate memory for new song.\n");
+        printf("malloc failed");
         (*playlists)[playListChoice - 1].songsNum--;
         // this will remove all we did above if we malloc failed
         (*playlists)[playListChoice - 1].songs = realloc(
@@ -477,10 +492,11 @@ void deleteSong(int songDelete,Playlist **playlist,int playListChoice)
 
     // because now i have array with one slot empty i want to make a smaller array
     Song **newSongs = realloc(songs, sizeof(Song*) * (numSongs-1));
-    if (newSongs != NULL || numSongs-1 == 0) {
-        (*playlist)[playListChoice-1].songs = newSongs;
+    if (newSongs == NULL && numSongs-1 != 0) {
+        printf("malloc failed");
+        exit(1);
     }
-
+    (*playlist)[playListChoice-1].songs = newSongs;
     printf("Song deleted successfully.\n");
 }
 void removePlayList(int *howManyPlaylists,Playlist **playLists,char mainMenu[])
@@ -490,37 +506,77 @@ void removePlayList(int *howManyPlaylists,Playlist **playLists,char mainMenu[])
     printf("Choose a playlist:\n");
     printPlayListMenu(*howManyPlaylists, playLists, menuIndex, mainMenu);
     scanf("%d",&deletePlayList);
-    int numberOfSongs = (*playLists)[deletePlayList].songsNum;
+
     // i check if the user typed back to main menu
     if(deletePlayList==menuIndex)
     {
         return;
     }
+
     // because the user will choose between 1 - infinite and not from 0
     deletePlayList--;
-    // for loop that will free each individual song struct
-    for (int i=0;i<numberOfSongs;i++)
+    if((*playLists)[deletePlayList].songsNum>0)
     {
-        free((*playLists)[deletePlayList].songs[i]->title);
-        free((*playLists)[deletePlayList].songs[i]->artist);
-        free((*playLists)[deletePlayList].songs[i]->lyrics);
-        //after freeing all the variables of the song i can now free the song itself
-        free((*playLists)[deletePlayList].songs[i]);
+        int numberOfSongs = (*playLists)[deletePlayList].songsNum;
+        // for loop that will free each individual song struct
+        for (int i=0;i<numberOfSongs;i++)
+        {
+            free((*playLists)[deletePlayList].songs[i]->title);
+            free((*playLists)[deletePlayList].songs[i]->artist);
+            free((*playLists)[deletePlayList].songs[i]->lyrics);
+            //after freeing all the variables of the song i can now free the song itself
+            free((*playLists)[deletePlayList].songs[i]);
+        }
+        // free the songs array and playlist name
+        free((*playLists)[deletePlayList].songs);
+        free((*playLists)[deletePlayList].name);
+
+
+    }else
+    {
+        //because the user hasn't added a single song to this playlist i want to only free the name of playlist
+        free((*playLists)[deletePlayList].name);
+
     }
-    // free the songs array and playlist name
-    free((*playLists)[deletePlayList].songs);
-    free((*playLists)[deletePlayList].name);
     // now i need to move all the playlists in the array one slot left
     for(int i = deletePlayList; i < *howManyPlaylists - 1; i++) {
         (*playLists)[i] = (*playLists)[i + 1];
     }
-    // now i realloc the size of the array because it has one slot empty
-    Playlist *temp = realloc(*playLists, (*howManyPlaylists - 1) * sizeof(Playlist));
-    if(temp != NULL || *howManyPlaylists - 1 == 0) {
-        *playLists = temp;
-    }
+    // one less playlist
     (*howManyPlaylists)--;
+    // now i realloc the size of the array because it has one slot empty
+    Playlist *temp = realloc(*playLists, (*howManyPlaylists ) * sizeof(Playlist));
+    if (temp == NULL && *howManyPlaylists > 0) {
+        printf("malloc failed");
+        exit(1);
+    }
+     *playLists = temp;
+
     printf("Playlist deleted.\n");
+}
+void freeAll(int *howManyPlaylists,Playlist **playLists)
+{
+    // for loop which goes on all the playlists and free all the songs in the songs array including the array
+    for (int i=0;i<*howManyPlaylists;i++)
+    {
+        int numberOfSongs = (*playLists)[i].songsNum;
+        // for loop that will free each individual song struct
+        for (int j=0;j<numberOfSongs;j++)
+        {
+            free((*playLists)[i].songs[j]->title);
+            free((*playLists)[i].songs[j]->artist);
+            free((*playLists)[i].songs[j]->lyrics);
+            //after freeing all the variables of the song i can now free the song itself
+            free((*playLists)[i].songs[j]);
+        }
+        // free the songs array and playlist name
+        free((*playLists)[i].songs);
+        free((*playLists)[i].name);
+
+    }
+    //after i freed all the playlist variables i can free the array of playlists
+    free(*playLists);
+
 }
 void sortPlaylist() {
 
@@ -540,26 +596,27 @@ char* getString()
     char *songDetail = malloc(sizeof(char));
     // checks if malloc succeeded
     if (songDetail == NULL) {
-        printf("failed to allocate memory");
-        return NULL;
+        printf("malloc failed");
+        exit(1);
     }
 
     c = getchar(); // Read the first character
-    if (c != '\n')
+    if (c != '\n' && c != '\r')
     {
         // If it's not just an empty line
         length = 1;
-        songDetail[0] = c; // Store the first character
+        // Store the first character
+        songDetail[0] = c;
     }
-    while ((c=getchar()) !='\n')
+    while ((c=getchar()) !='\n'&& c !='\r')
     {
         length++;
         tempP= realloc(songDetail,(length+1) * sizeof(char));
         if(tempP==NULL)
         {
-            printf("failed to allocate memory");
             free(songDetail);
-            return NULL;
+            printf("malloc failed");
+            exit(1);
         }
         songDetail= tempP;
         //insert the char to it specific place in the char array
